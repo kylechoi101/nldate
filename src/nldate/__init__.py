@@ -273,11 +273,12 @@ def _try_relative_expression(s: str, today: date) -> date | None:
             return _apply_offset(today, years=1)
 
     m = re.match(
-        r"(\d+)\s+(year|years|month|months|week|weeks|day|days)\s+(from now|ago)",
+        r"(\d+|an?)\s+(year|years|month|months|week|weeks|day|days)\s+(from now|ago)",
         s_lower,
     )
     if m:
-        n = int(m.group(1))
+        qty = m.group(1)
+        n = 1 if qty in ("a", "an") else int(qty)
         unit = m.group(2)
         direction = m.group(3)
         sign = -1 if direction == "ago" else 1
@@ -305,11 +306,12 @@ def _try_relative_expression(s: str, today: date) -> date | None:
             return _apply_offset(today, years=n)
 
     m = re.match(
-        r"(\d+)\s+(year|years|month|months|week|weeks|day|days)\s+ago$",
+        r"(\d+|an?)\s+(year|years|month|months|week|weeks|day|days)\s+ago$",
         s_lower,
     )
     if m:
-        n = int(m.group(1))
+        qty = m.group(1)
+        n = 1 if qty in ("a", "an") else int(qty)
         unit = m.group(2)
         offset_days = _UNIT_DAYS.get(unit, 0)
         if offset_days:
