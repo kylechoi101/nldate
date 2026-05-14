@@ -83,6 +83,18 @@ _UNIT_DAYS = {
     "weeks": 7,
 }
 
+_QTY = r"\d+|an?|one|two|three|four|five|six|seven|eight|nine|ten"
+
+
+def _qty_to_int(s: str) -> int:
+    s = s.lower()
+    if s.isdigit():
+        return int(s)
+    if s in ("a", "an"):
+        return 1
+    word = _parse_number_word(s)
+    return word if word is not None else 1
+
 
 def _apply_offset(d: date, years: int = 0, months: int = 0, days: int = 0) -> date:
     if years or months:
@@ -273,12 +285,11 @@ def _try_relative_expression(s: str, today: date) -> date | None:
             return _apply_offset(today, years=1)
 
     m = re.match(
-        r"(\d+|an?)\s+(year|years|month|months|week|weeks|day|days)\s+(from now|ago)",
+        rf"({_QTY})\s+(year|years|month|months|week|weeks|day|days)\s+(from now|ago)",
         s_lower,
     )
     if m:
-        qty = m.group(1)
-        n = 1 if qty in ("a", "an") else int(qty)
+        n = _qty_to_int(m.group(1))
         unit = m.group(2)
         direction = m.group(3)
         sign = -1 if direction == "ago" else 1
@@ -291,11 +302,11 @@ def _try_relative_expression(s: str, today: date) -> date | None:
             return _apply_offset(today, years=sign * n)
 
     m = re.match(
-        r"(?:in\s+)?(\d+)\s+(year|years|month|months|week|weeks|day|days)$",
+        rf"(?:in\s+)?({_QTY})\s+(year|years|month|months|week|weeks|day|days)$",
         s_lower,
     )
     if m:
-        n = int(m.group(1))
+        n = _qty_to_int(m.group(1))
         unit = m.group(2)
         offset_days = _UNIT_DAYS.get(unit, 0)
         if offset_days:
@@ -306,12 +317,11 @@ def _try_relative_expression(s: str, today: date) -> date | None:
             return _apply_offset(today, years=n)
 
     m = re.match(
-        r"(\d+|an?)\s+(year|years|month|months|week|weeks|day|days)\s+ago$",
+        rf"({_QTY})\s+(year|years|month|months|week|weeks|day|days)\s+ago$",
         s_lower,
     )
     if m:
-        qty = m.group(1)
-        n = 1 if qty in ("a", "an") else int(qty)
+        n = _qty_to_int(m.group(1))
         unit = m.group(2)
         offset_days = _UNIT_DAYS.get(unit, 0)
         if offset_days:
@@ -327,7 +337,7 @@ def _try_relative_expression(s: str, today: date) -> date | None:
 def _try_compound_relative_expression(s: str, today: date) -> date | None:
     s_lower = s.lower()
     m = re.match(
-        r"((?:\d+\s+(?:year|years|month|months|week|weeks|day|days)\s*(?:and\s*)?)+)"
+        rf"((?:(?:{_QTY})\s+(?:year|years|month|months|week|weeks|day|days)\s*(?:and\s*)?)+)"
         r"(before|after)\s+(.+)",
         s_lower,
     )
@@ -345,9 +355,9 @@ def _try_compound_relative_expression(s: str, today: date) -> date | None:
     sign = -1 if direction == "before" else 1
     years = months = days = 0
     for unit_part in re.findall(
-        r"(\d+)\s+(year|years|month|months|week|weeks|day|days)", offset_str
+        rf"({_QTY})\s+(year|years|month|months|week|weeks|day|days)", offset_str
     ):
-        n = int(unit_part[0])
+        n = _qty_to_int(unit_part[0])
         u = unit_part[1]
         if u in ("year", "years"):
             years += sign * n
@@ -365,11 +375,11 @@ def _try_duration_from_now(s: str, today: date) -> date | None:
     s_lower = s.lower()
 
     m = re.match(
-        r"(\d+)\s+(day|days)\s+(before|after)\s+(today|tomorrow|yesterday)",
+        rf"({_QTY})\s+(day|days)\s+(before|after)\s+(today|tomorrow|yesterday)",
         s_lower,
     )
     if m:
-        n = int(m.group(1))
+        n = _qty_to_int(m.group(1))
         direction = m.group(3)
         ref = _parse_date_expr(m.group(4), today)
         if ref is None:
@@ -392,13 +402,13 @@ def _try_bare_relative_to_date(s: str, today: date) -> date | None:
     s_lower = s.lower()
 
     m = re.match(
-        r"(\d+)\s+(year|years|month|months|week|weeks|day|days)\s+(before|after)\s+(.+)",
+        rf"({_QTY})\s+(year|years|month|months|week|weeks|day|days)\s+(before|after)\s+(.+)",
         s_lower,
     )
     if not m:
         return None
 
-    n = int(m.group(1))
+    n = _qty_to_int(m.group(1))
     unit = m.group(2)
     direction = m.group(3)
     ref_str = m.group(4)
