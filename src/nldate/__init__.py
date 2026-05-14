@@ -131,15 +131,15 @@ def _parse_absolute_date(s: str) -> date | None:
         return date(int(m.group(3)), int(m.group(1)), int(m.group(2)))
 
     s_clean = _strip_ordinal(s)
-    m = re.match(r"(?i)([a-z]+)\s+(\d{1,2}),?\s*(\d{4})$", s_clean)
+    m = re.match(r"(?i)([a-z]+)\.?\s+(\d{1,2}),?\s*(\d{4})$", s_clean)
     if m:
-        month_name = m.group(1).lower()
+        month_name = m.group(1).lower().rstrip(".")
         if month_name in MONTH_NAMES:
             return date(int(m.group(3)), MONTH_NAMES[month_name], int(m.group(2)))
 
-    m = re.match(r"(?i)(\d{1,2})\s+([a-z]+)\s+(\d{4})$", s_clean)
+    m = re.match(r"(?i)(\d{1,2})\s+([a-z]+)\.?\s+(\d{4})$", s_clean)
     if m:
-        month_name = m.group(2).lower()
+        month_name = m.group(2).lower().rstrip(".")
         if month_name in MONTH_NAMES:
             return date(int(m.group(3)), MONTH_NAMES[month_name], int(m.group(1)))
 
