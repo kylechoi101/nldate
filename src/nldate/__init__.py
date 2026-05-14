@@ -2,20 +2,50 @@ import re
 from datetime import date, timedelta
 
 MONTH_NAMES = {
-    "january": 1, "february": 2, "march": 3, "april": 4,
-    "may": 5, "june": 6, "july": 7, "august": 8,
-    "september": 9, "october": 10, "november": 11, "december": 12,
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4,
-    "jun": 6, "jul": 7, "aug": 8,     "sep": 9, "sept": 9,
-    "oct": 10, "nov": 11, "dec": 12,
+    "january": 1,
+    "february": 2,
+    "march": 3,
+    "april": 4,
+    "may": 5,
+    "june": 6,
+    "july": 7,
+    "august": 8,
+    "september": 9,
+    "october": 10,
+    "november": 11,
+    "december": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "sept": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 WEEKDAYS = {
-    "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
-    "friday": 4, "saturday": 5, "sunday": 6,
-    "mon": 0, "tue": 1, "tues": 1, "wed": 2,
-    "thu": 3, "thur": 3, "thurs": 3, "fri": 4,
-    "sat": 5, "sun": 6,
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+    "mon": 0,
+    "tue": 1,
+    "tues": 1,
+    "wed": 2,
+    "thu": 3,
+    "thur": 3,
+    "thurs": 3,
+    "fri": 4,
+    "sat": 5,
+    "sun": 6,
 }
 
 
@@ -25,8 +55,16 @@ def _strip_ordinal(s: str) -> str:
 
 def _parse_number_word(s: str) -> int | None:
     words = {
-        "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-        "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+        "six": 6,
+        "seven": 7,
+        "eight": 8,
+        "nine": 9,
+        "ten": 10,
     }
     return words.get(s.lower())
 
@@ -39,8 +77,10 @@ def _parse_simple_number(s: str) -> int | None:
 
 
 _UNIT_DAYS = {
-    "day": 1, "days": 1,
-    "week": 7, "weeks": 7,
+    "day": 1,
+    "days": 1,
+    "week": 7,
+    "weeks": 7,
 }
 
 
@@ -49,9 +89,26 @@ def _apply_offset(d: date, years: int = 0, months: int = 0, days: int = 0) -> da
         total_months = d.month - 1 + months + years * 12
         target_year = d.year + total_months // 12
         target_month = total_months % 12 + 1
-        target_day = min(d.day, [31, 29 if target_year % 4 == 0 and (
-            target_year % 100 != 0 or target_year % 400 == 0
-        ) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][target_month - 1])
+        target_day = min(
+            d.day,
+            [
+                31,
+                29
+                if target_year % 4 == 0
+                and (target_year % 100 != 0 or target_year % 400 == 0)
+                else 28,
+                31,
+                30,
+                31,
+                30,
+                31,
+                31,
+                30,
+                31,
+                30,
+                31,
+            ][target_month - 1],
+        )
         d = date(target_year, target_month, target_day)
     if days:
         d += timedelta(days=days)
@@ -65,30 +122,26 @@ def _parse_absolute_date(s: str) -> date | None:
     if m:
         return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
+    m = re.match(r"(\d{4})[/.](\d{1,2})[/.](\d{1,2})$", s)
+    if m:
+        return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+
     m = re.match(r"(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$", s)
     if m:
         return date(int(m.group(3)), int(m.group(1)), int(m.group(2)))
 
     s_clean = _strip_ordinal(s)
-    m = re.match(
-        r"(?i)([a-z]+)\s+(\d{1,2}),?\s*(\d{4})$", s_clean
-    )
+    m = re.match(r"(?i)([a-z]+)\s+(\d{1,2}),?\s*(\d{4})$", s_clean)
     if m:
         month_name = m.group(1).lower()
         if month_name in MONTH_NAMES:
-            return date(
-                int(m.group(3)), MONTH_NAMES[month_name], int(m.group(2))
-            )
+            return date(int(m.group(3)), MONTH_NAMES[month_name], int(m.group(2)))
 
-    m = re.match(
-        r"(?i)(\d{1,2})\s+([a-z]+)\s+(\d{4})$", s_clean
-    )
+    m = re.match(r"(?i)(\d{1,2})\s+([a-z]+)\s+(\d{4})$", s_clean)
     if m:
         month_name = m.group(2).lower()
         if month_name in MONTH_NAMES:
-            return date(
-                int(m.group(3)), MONTH_NAMES[month_name], int(m.group(1))
-            )
+            return date(int(m.group(3)), MONTH_NAMES[month_name], int(m.group(1)))
 
     return None
 
